@@ -9,6 +9,7 @@ import {
 } from "react";
 import { MOCK_EVENTS } from "../data/mockEvents";
 import type { NexusEvent } from "../data/eventTypes";
+import { createMockEventsService } from "../services/mockEventsService";
 
 export interface EventState {
 	events: NexusEvent[];
@@ -92,6 +93,7 @@ export function eventReducer(
 type EventContextValue = {
 	state: EventState;
 	dispatch: React.Dispatch<EventAction>;
+	service: ReturnType<typeof createMockEventsService>;
 };
 
 const defaultContextValue: EventContextValue = {
@@ -105,22 +107,47 @@ const defaultContextValue: EventContextValue = {
 		void action;
 		throw new Error("EventContext dispatch called outside EventProvider");
 	},
+	service: {
+		getAll: async () => {
+			throw new Error("Event service called outside EventProvider");
+		},
+		addEvent: async () => {
+			throw new Error("Event service called outside EventProvider");
+		},
+		editEvent: async () => {
+			throw new Error("Event service called outside EventProvider");
+		},
+	},
 };
 
-export const EventContext =
-	createContext<EventContextValue>(defaultContextValue);
+const EventContext = createContext<EventContextValue>(defaultContextValue);
 
 export function EventProvider({ children }: { children: ReactNode }) {
 	// useReducer is preferred here because multiple related fields change together.
 	// Actions like OPEN_FORM, ADD_EVENT, and EDIT_EVENT update coordinated state atomically.
 	const [state, dispatch] = useReducer(eventReducer, initialState);
 
+	const service = useMemo(
+		() =>
+			createMockEventsService({
+				getEvents: () => state.events,
+				onAddEvent: (eventItem) => {
+					dispatch({ type: "ADD_EVENT", payload: eventItem });
+				},
+				onEditEvent: (eventItem) => {
+					dispatch({ type: "EDIT_EVENT", payload: eventItem });
+				},
+			}),
+		[state.events, dispatch],
+	);
+
 	const value = useMemo(
 		() => ({
 			state,
 			dispatch,
+			service,
 		}),
-		[state, dispatch],
+		[state, dispatch, service],
 	);
 
 	return (
@@ -136,6 +163,13 @@ export function useEventContext(): EventContextValue {
 	}
 
 	return context;
+}
+
+export function useMockEventsService(): ReturnType<
+	typeof createMockEventsService
+> {
+	const { service } = useEventContext();
+	return service;
 }
 
 export function useAddEvent(): (eventItem: NexusEvent) => void {

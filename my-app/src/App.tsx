@@ -1,18 +1,23 @@
+import * as React from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
 	RouterProvider,
 	createBrowserRouter,
 	useParams,
+	Link,
 } from "react-router-dom";
-import { EventProvider } from "./context/EventContext";
+import { parseISO, format } from "date-fns";
+import { EventProvider, useEventContext, useOpenForm, useCloseForm } from "./context/EventContext";
 import {
-	useAddEventMutation,
-	useEditEventMutation,
+	useDeleteEventMutation,
 	useNexusEventsQuery,
 } from "./hooks/useEventQueries";
 import { queryClient } from "./lib/queryClient";
 import { DataGrid } from "./components/DataGrid/DataGrid";
-import { Timeline } from "./components/Timeline/Timeline";
+import { EventForm } from "./components/EventForm/EventForm";
+import { Toaster } from "./components/ui/toast";
+import { AppHeader } from "./components/Layout/AppHeader";
+import { TimelinePage } from "./routes/TimelinePage";
 
 function Dashboard() {
 	const {
@@ -22,34 +27,14 @@ function Dashboard() {
 		isError,
 		refetch,
 	} = useNexusEventsQuery();
-	const addEventMutation = useAddEventMutation();
-	const editEventMutation = useEditEventMutation();
+	const deleteEventMutation = useDeleteEventMutation();
+	const { state } = useEventContext();
+	const openForm = useOpenForm();
+	const closeForm = useCloseForm();
+	const addEventTriggerRef = React.useRef<HTMLButtonElement>(null);
 
-	const handleCreateEvent = () => {
-		addEventMutation.mutate({
-			title: "Incoming anomaly ping",
-			date: new Date().toISOString(),
-			category: "anomaly",
-			severity: "medium",
-			agent: "AUTO-NODE",
-			location: "Sector 7",
-			status: "open",
-			description: "Generated from TanStack Query mutation hook.",
-		});
-	};
-
-	const handleEditEvent = (eventItem: (typeof events)[number]) => {
-		const nextStatus =
-			eventItem.status === "open"
-				? "investigating"
-				: eventItem.status === "investigating"
-					? "closed"
-					: eventItem.status;
-
-		editEventMutation.mutate({
-			...eventItem,
-			status: nextStatus,
-		});
+	const handleDeleteEvent = (eventItem: (typeof events)[number]) => {
+		deleteEventMutation.mutate(eventItem.id);
 	};
 
 	const openCount = events.filter((e) => e.status === "open").length;
@@ -57,22 +42,17 @@ function Dashboard() {
 
 	return (
 		<div className="nx-dashboard">
-			<header className="nx-header">
-				<div className="nx-header-brand">
-					<span className="nx-header-icon" aria-hidden="true">◈</span>
-					<div className="nx-header-text">
-						<span className="nx-header-title">NEXUS</span>
-						<span className="nx-header-subtitle">Anomaly &amp; Incident Response</span>
-					</div>
-				</div>
-				<button
-					className="ui-btn ui-btn--default"
-					onClick={handleCreateEvent}
-					disabled={addEventMutation.isPending}
-				>
-					{addEventMutation.isPending ? "Creating…" : "+ Add Event"}
-				</button>
-			</header>
+			<AppHeader
+				actions={
+					<button
+						ref={addEventTriggerRef}
+						className="ui-btn ui-btn--default"
+						onClick={() => openForm()}
+					>
+						+ Add Event
+					</button>
+				}
+			/>
 
 			<div className="nx-stats-bar">
 				<div className="nx-stat">
@@ -113,17 +93,47 @@ function Dashboard() {
 						onRetry={() => {
 							void refetch();
 						}}
-						onEditEvent={handleEditEvent}
+						onEditEvent={(eventItem) => openForm(eventItem)}
+					onDeleteEvent={handleDeleteEvent}
 					/>
 				</section>
 
 				<section className="nx-section">
 					<div className="nx-section-header">
-						<h2 className="nx-section-title">Timeline</h2>
+						<h2 className="nx-section-title">Recent Timeline</h2>
+						<Link to="/timeline" className="nx-section-link">View all →</Link>
 					</div>
-					<Timeline events={events} selectedEventId={null} />
+					<ul className="nx-timeline-summary">
+						{isLoading
+							? Array.from({ length: 5 }).map((_, i) => (
+								<li key={i} className="nx-timeline-summary-row nx-timeline-summary-row--skeleton" />
+							))
+							: events
+								.slice()
+								.sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime())
+								.slice(0, 5)
+								.map((e) => (
+									<li key={e.id} className="nx-timeline-summary-row">
+										<span className={`nx-summary-dot nx-summary-dot--${e.severity}`} aria-hidden="true" />
+										<span className="nx-summary-title">{e.title}</span>
+										<span className="nx-summary-category">{e.category}</span>
+										<time className="nx-summary-date" dateTime={e.date}>
+											{format(parseISO(e.date), "dd MMM yyyy")}
+										</time>
+									</li>
+								))
+						}
+					</ul>
 				</section>
 			</main>
+
+			<EventForm
+				open={state.isFormOpen}
+				onClose={closeForm}
+				editingEvent={state.editingEvent}
+				triggerRef={addEventTriggerRef}
+			/>
+			<Toaster />
 		</div>
 	);
 }
@@ -139,6 +149,10 @@ const router = createBrowserRouter([
 	{
 		path: "/",
 		element: <Dashboard />,
+	},
+	{
+		path: "/timeline",
+		element: <TimelinePage />,
 	},
 	{
 		path: "/events/:id",

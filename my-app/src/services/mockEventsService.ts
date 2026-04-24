@@ -9,6 +9,7 @@ export type MockEventsServiceCallbacks = {
 	getEvents: () => NexusEvent[];
 	onAddEvent: (eventItem: NexusEvent) => void;
 	onEditEvent: (eventItem: NexusEvent) => void;
+	onDeleteEvent: (id: string) => void;
 };
 
 const GET_ALL_DELAY_MS = 1200;
@@ -50,6 +51,12 @@ function createServiceApi(callbacks: MockEventsServiceCallbacks) {
 			await sleep(MUTATION_DELAY_MS);
 			callbacks.onEditEvent(eventItem);
 			return eventItem;
+		},
+
+		async deleteEvent(id: string): Promise<string> {
+			await sleep(MUTATION_DELAY_MS);
+			callbacks.onDeleteEvent(id);
+			return id;
 		},
 	};
 }

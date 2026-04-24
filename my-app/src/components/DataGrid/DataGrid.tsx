@@ -6,12 +6,22 @@ import {
 	ChevronsUpDown,
 	Pencil,
 	SearchX,
+	Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { NexusEvent } from "../../data/eventTypes";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "../ui/alert-dialog";
 import {
 	Table,
 	TableBody,
@@ -33,6 +43,7 @@ type DataGridProps = {
 	isError: boolean;
 	onRetry: () => void;
 	onEditEvent: (event: NexusEvent) => void;
+	onDeleteEvent: (event: NexusEvent) => void;
 };
 
 const COLUMNS: ColumnDef<NexusEvent>[] = [
@@ -192,8 +203,10 @@ export function DataGrid({
 	isError,
 	onRetry,
 	onEditEvent,
+	onDeleteEvent,
 }: DataGridProps) {
 	const [isFilterRowVisible, setFilterRowVisible] = useState(false);
+	const [pendingDelete, setPendingDelete] = useState<NexusEvent | null>(null);
 
 	const {
 		visibleColumns,
@@ -351,20 +364,56 @@ export function DataGrid({
 									</TableCell>
 								))}
 								<TableCell>
-									<Button
-										variant="ghost"
-										size="icon"
-										onClick={() => onEditEvent(eventItem)}
-										aria-label={`Edit ${eventItem.title}`}
-									>
-										<Pencil size={16} aria-hidden="true" />
-									</Button>
+									<div style={{ display: "flex", gap: "4px" }}>
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={() => onEditEvent(eventItem)}
+											aria-label={`Edit ${eventItem.title}`}
+										>
+											<Pencil size={16} aria-hidden="true" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={() => setPendingDelete(eventItem)}
+											aria-label={`Delete ${eventItem.title}`}
+										>
+											<Trash2 size={16} aria-hidden="true" />
+										</Button>
+									</div>
 								</TableCell>
 							</TableRow>
 						))
 					)}
 				</TableBody>
 			</Table>
+
+			<AlertDialog
+				open={pendingDelete !== null}
+				onOpenChange={(open) => { if (!open) setPendingDelete(null); }}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete this report?</AlertDialogTitle>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel onClick={() => setPendingDelete(null)}>
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => {
+								if (pendingDelete) {
+									onDeleteEvent(pendingDelete);
+									setPendingDelete(null);
+								}
+							}}
+						>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

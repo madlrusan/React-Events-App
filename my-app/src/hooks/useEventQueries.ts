@@ -48,3 +48,17 @@ export function useEditEventMutation() {
 		},
 	});
 }
+
+export function useDeleteEventMutation() {
+	const service = useMockEventsService();
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (id: string) => service.deleteEvent(id),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: eventQueryKeys.all,
+			});
+		},
+	});
+}

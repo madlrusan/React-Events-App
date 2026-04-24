@@ -21,6 +21,7 @@ export interface EventState {
 export type EventAction =
 	| { type: "ADD_EVENT"; payload: NexusEvent }
 	| { type: "EDIT_EVENT"; payload: NexusEvent }
+	| { type: "DELETE_EVENT"; payload: string }
 	| { type: "SELECT_EVENT"; payload: string | null }
 	| { type: "OPEN_FORM"; payload?: NexusEvent }
 	| { type: "CLOSE_FORM" };
@@ -65,6 +66,17 @@ export function eventReducer(
 				selectedEventId: action.payload.id,
 				editingEvent: null,
 				isFormOpen: false,
+			};
+		}
+		case "DELETE_EVENT": {
+			const nextEvents = state.events.filter((e) => e.id !== action.payload);
+			return {
+				...state,
+				events: nextEvents,
+				selectedEventId:
+					state.selectedEventId === action.payload
+						? null
+						: state.selectedEventId,
 			};
 		}
 		case "SELECT_EVENT":
@@ -117,6 +129,9 @@ const defaultContextValue: EventContextValue = {
 		editEvent: async () => {
 			throw new Error("Event service called outside EventProvider");
 		},
+		deleteEvent: async () => {
+			throw new Error("Event service called outside EventProvider");
+		},
 	},
 };
 
@@ -136,6 +151,9 @@ export function EventProvider({ children }: { children: ReactNode }) {
 				},
 				onEditEvent: (eventItem) => {
 					dispatch({ type: "EDIT_EVENT", payload: eventItem });
+				},
+				onDeleteEvent: (id) => {
+					dispatch({ type: "DELETE_EVENT", payload: id });
 				},
 			}),
 		[state.events, dispatch],

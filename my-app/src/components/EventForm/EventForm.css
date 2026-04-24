@@ -1,0 +1,47 @@
+/* ── EventForm ────────────────────────────────────────────────────── */
+
+.nx-event-form {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+}
+
+.nx-event-form-fields {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1.25rem;
+	flex: 1;
+	overflow-y: auto;
+}
+
+/* ── FormField ───────────────────────────────────────────────────── */
+
+.nx-form-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3125rem;
+}
+
+.nx-form-label {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--text-h);
+	cursor: default;
+}
+
+/* text-destructive equivalent — red error text at small size */
+.nx-form-error {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: #dc2626;
+	margin: 0;
+	line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+	.nx-form-error {
+		color: #f87171;
+	}
+}

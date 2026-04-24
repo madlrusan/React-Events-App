@@ -1,0 +1,15 @@
+import * as React from "react";
+import { cn } from "../../lib/utils";
+
+// forwardRef lets callers hold a ref to the underlying <textarea> — needed for
+// programmatic focus (e.g. focusing the first invalid field on form submit).
+export const Textarea = React.forwardRef<
+	HTMLTextAreaElement,
+	React.TextareaHTMLAttributes<HTMLTextAreaElement>
+>(({ className, ...props }, ref) => {
+	return (
+		<textarea ref={ref} className={cn("ui-textarea", className)} {...props} />
+	);
+});
+
+Textarea.displayName = "Textarea";

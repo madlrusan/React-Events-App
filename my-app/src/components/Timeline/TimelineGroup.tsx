@@ -9,6 +9,7 @@ type TimelineGroupProps = {
 	groupRef: (node: HTMLElement | null) => void;
 	cardRefs: Array<(node: HTMLElement | null) => void>;
 	onCardFocus: (cardIndex: number) => void;
+	onCardClick: (event: NexusEvent) => void;
 	isSelected?: boolean;
 	selectedEventId: string | null;
 };
@@ -19,6 +20,7 @@ export function TimelineGroup({
 	groupRef,
 	cardRefs,
 	onCardFocus,
+	onCardClick,
 	isSelected = false,
 	selectedEventId,
 }: TimelineGroupProps) {
@@ -48,6 +50,7 @@ export function TimelineGroup({
 						event={eventItem}
 						cardRef={cardRefs[cardIndex]}
 						onFocus={() => onCardFocus(cardIndex)}
+						onClick={() => onCardClick(eventItem)}
 						isSelected={
 							isSelected && selectedEventId === eventItem.id
 						}

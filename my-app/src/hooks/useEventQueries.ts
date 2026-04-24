@@ -55,10 +55,11 @@ export function useDeleteEventMutation() {
 
 	return useMutation({
 		mutationFn: (id: string) => service.deleteEvent(id),
-		onSuccess: () => {
-			void queryClient.invalidateQueries({
-				queryKey: eventQueryKeys.all,
-			});
+		onSuccess: (_, id) => {
+			queryClient.setQueriesData<NexusEvent[]>(
+				{ queryKey: eventQueryKeys.all },
+				(old) => old?.filter((e) => e.id !== id) ?? [],
+			);
 		},
 	});
 }

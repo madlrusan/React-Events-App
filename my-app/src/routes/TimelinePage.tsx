@@ -2,10 +2,11 @@ import * as React from "react";
 import { useNexusEventsQuery } from "../hooks/useEventQueries";
 import { useEventContext, useOpenForm, useCloseForm } from "../context/EventContext";
 import { Timeline } from "../components/Timeline/Timeline";
+import { EventDetailModal } from "../components/Timeline/EventDetailModal";
 import { EventForm } from "../components/EventForm/EventForm";
 import { Toaster } from "../components/ui/toast";
 import { AppHeader } from "../components/Layout/AppHeader";
-import type { EventCategory, EventSeverity } from "../data/eventTypes";
+import type { EventCategory, EventSeverity, NexusEvent } from "../data/eventTypes";
 import { EVENT_CATEGORIES, EVENT_SEVERITIES } from "../data/eventTypes";
 
 export function TimelinePage() {
@@ -14,6 +15,8 @@ export function TimelinePage() {
 	const openForm = useOpenForm();
 	const closeForm = useCloseForm();
 	const addEventTriggerRef = React.useRef<HTMLButtonElement>(null);
+
+	const [selectedEvent, setSelectedEvent] = React.useState<NexusEvent | null>(null);
 
 	const [search, setSearch] = React.useState("");
 	const [category, setCategory] = React.useState<EventCategory | "">("");
@@ -87,8 +90,17 @@ export function TimelinePage() {
 				</span>
 			</div>
 			<div className="nx-timeline-page-content">
-				<Timeline events={filtered} selectedEventId={null} />
+				<Timeline
+					events={filtered}
+					selectedEventId={selectedEvent?.id ?? null}
+					onEventClick={setSelectedEvent}
+				/>
 			</div>
+			<EventDetailModal
+				event={selectedEvent}
+				open={selectedEvent !== null}
+				onClose={() => setSelectedEvent(null)}
+			/>
 			<EventForm
 				open={state.isFormOpen}
 				onClose={closeForm}

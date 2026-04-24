@@ -8,6 +8,7 @@ import { useTimelineKeyboard } from "./useTimelineKeyboard";
 type TimelineProps = {
 	events: NexusEvent[];
 	selectedEventId: string | null;
+	onEventClick?: (event: NexusEvent) => void;
 };
 
 type TimelineGroupModel = {
@@ -23,7 +24,7 @@ function getCardAnnouncement(eventItem: NexusEvent): string {
 	return `${eventItem.title}. Category: ${eventItem.category}. Severity: ${eventItem.severity}. Reported by ${eventItem.agent}.`;
 }
 
-export function Timeline({ events, selectedEventId }: TimelineProps) {
+export function Timeline({ events, selectedEventId, onEventClick }: TimelineProps) {
 	const groupRefs = useRef<HTMLElement[]>([]);
 	const cardRefs = useRef<HTMLElement[][]>([]);
 
@@ -146,6 +147,7 @@ export function Timeline({ events, selectedEventId }: TimelineProps) {
 							};
 						})}
 						onCardFocus={() => undefined}
+					onCardClick={(eventItem) => onEventClick?.(eventItem)}
 						isSelected={groupHasSelectedEvent}
 						selectedEventId={selectedEventId}
 					/>

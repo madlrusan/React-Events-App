@@ -8,6 +8,7 @@ type TimelineCardProps = {
 	cardRef: (node: HTMLElement | null) => void;
 	isSelected: boolean;
 	onFocus: () => void;
+	onClick: () => void;
 };
 
 const SEVERITY_DOT_CLASS: Record<NexusEvent["severity"], string> = {
@@ -22,14 +23,17 @@ export function TimelineCard({
 	cardRef,
 	isSelected,
 	onFocus,
+	onClick,
 }: TimelineCardProps) {
 	return (
 		<article
 			ref={cardRef}
-			role="article"
-			aria-label={`${event.title}, ${event.category}, ${event.severity}, reported by ${event.agent}`}
-			tabIndex={-1}
+			role="button"
+			aria-label={`${event.title}, ${event.category}, ${event.severity}, reported by ${event.agent}. Press to view details.`}
+			tabIndex={0}
 			onFocus={onFocus}
+			onClick={onClick}
+			onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
 			className={cn(
 				"nx-timeline-card",
 				isSelected && "nx-timeline-card--selected",

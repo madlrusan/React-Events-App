@@ -190,11 +190,6 @@ function EventFormBody({ onClose, editingEvent }: EventFormBodyProps) {
 		mutationFn: (data: Omit<NexusEvent, "id">) => service.addEvent(data),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["events"] });
-			toast({
-				title: "NEXUS updated.",
-				description: "Report logged successfully.",
-			});
-			onClose();
 		},
 		onError: () => {
 			toast({
@@ -210,11 +205,6 @@ function EventFormBody({ onClose, editingEvent }: EventFormBodyProps) {
 		mutationFn: (data: NexusEvent) => service.editEvent(data),
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ["events"] });
-			toast({
-				title: "NEXUS updated.",
-				description: "Report logged successfully.",
-			});
-			onClose();
 		},
 		onError: () => {
 			toast({
@@ -224,6 +214,22 @@ function EventFormBody({ onClose, editingEvent }: EventFormBodyProps) {
 			});
 		},
 	});
+
+	// Derive success state from mutation status — more reliable than onSuccess setState
+	// because it survives context re-renders triggered by ADD_EVENT / EDIT_EVENT dispatch.
+	const isSuccess = addMutation.isSuccess || editMutation.isSuccess;
+	const successMessage = isSuccess
+		? editingEvent
+			? "Report updated successfully."
+			: "Report logged successfully."
+		: null;
+
+	// Close the form 1.5 s after success so the user can read the message.
+	React.useEffect(() => {
+		if (!isSuccess) return;
+		const timer = setTimeout(onClose, 1500);
+		return () => clearTimeout(timer);
+	}, [isSuccess, onClose]);
 
 	const isPending = addMutation.isPending || editMutation.isPending;
 
@@ -470,16 +476,27 @@ function EventFormBody({ onClose, editingEvent }: EventFormBodyProps) {
 							</FormField>
 						</div>
 
+						{successMessage && (
+							<div
+								role="status"
+								aria-live="polite"
+								aria-atomic="true"
+								className="nx-form-success"
+							>
+								{successMessage}
+							</div>
+						)}
+
 						<DialogFooter>
 							<Button
 								type="button"
 								variant="outline"
 								onClick={handleCancel}
-								disabled={isPending}
+								disabled={isPending || isSuccess}
 							>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isPending}>
+							<Button type="submit" disabled={isPending || isSuccess}>
 								{isPending
 									? "Saving…"
 									: editingEvent

@@ -48,7 +48,8 @@ export function eventReducer(
 				events: nextEvents,
 				selectedEventId: action.payload.id,
 				editingEvent: null,
-				isFormOpen: false,
+				// isFormOpen intentionally not set here — the form closes itself via
+				// CLOSE_FORM after showing the success message region.
 			};
 		}
 		case "EDIT_EVENT": {
@@ -65,7 +66,8 @@ export function eventReducer(
 				events: nextEvents,
 				selectedEventId: action.payload.id,
 				editingEvent: null,
-				isFormOpen: false,
+				// isFormOpen intentionally not set here — the form closes itself via
+				// CLOSE_FORM after showing the success message region.
 			};
 		}
 		case "DELETE_EVENT": {

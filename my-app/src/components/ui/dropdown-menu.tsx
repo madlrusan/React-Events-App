@@ -34,7 +34,7 @@ export function DropdownMenu({ children }: { children: ReactNode }) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		function onPointerDown(event: MouseEvent) {
+		function onPointerDown(event: globalThis.MouseEvent) {
 			if (!containerRef.current?.contains(event.target as Node)) {
 				setOpen(false);
 			}

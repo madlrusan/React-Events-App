@@ -11,9 +11,16 @@ import {
 	useNexusEventsQuery,
 } from "./hooks/useEventQueries";
 import { queryClient } from "./lib/queryClient";
+import { DataGrid } from "./components/DataGrid/DataGrid";
 
 function Dashboard() {
-	const { data: events = [], isLoading, error } = useNexusEventsQuery();
+	const {
+		data: events = [],
+		isLoading,
+		error,
+		isError,
+		refetch,
+	} = useNexusEventsQuery();
 	const addEventMutation = useAddEventMutation();
 	const editEventMutation = useEditEventMutation();
 
@@ -30,45 +37,43 @@ function Dashboard() {
 		});
 	};
 
-	const handleCloseFirstEvent = () => {
-		const firstEvent = events[0];
-
-		if (!firstEvent) {
-			return;
-		}
+	const handleEditEvent = (eventItem: (typeof events)[number]) => {
+		const nextStatus =
+			eventItem.status === "open"
+				? "investigating"
+				: eventItem.status === "investigating"
+					? "closed"
+					: eventItem.status;
 
 		editEventMutation.mutate({
-			...firstEvent,
-			status: "closed",
+			...eventItem,
+			status: nextStatus,
 		});
 	};
-
-	if (isLoading) {
-		return <h1>NEXUS Dashboard loading events...</h1>;
-	}
-
-	if (error) {
-		return <h1>{(error as Error).message}</h1>;
-	}
 
 	return (
 		<div>
 			<h1>NEXUS Dashboard</h1>
-			<p>Total events: {events.length}</p>
+			<p>
+				{isError
+					? ((error as Error)?.message ?? "Unable to load events.")
+					: `Total events: ${events.length}`}
+			</p>
 			<button
 				onClick={handleCreateEvent}
 				disabled={addEventMutation.isPending}
 			>
 				{addEventMutation.isPending ? "Creating..." : "Add Event"}
 			</button>
-			<button
-				onClick={handleCloseFirstEvent}
-				disabled={editEventMutation.isPending || events.length === 0}
-			>
-				{editEventMutation.isPending
-					? "Saving..."
-					: "Close First Event"}
-			</button>
+			<DataGrid
+				data={events}
+				isLoading={isLoading}
+				isError={isError}
+				onRetry={() => {
+					void refetch();
+				}}
+				onEditEvent={handleEditEvent}
+			/>
 		</div>
 	);
 }

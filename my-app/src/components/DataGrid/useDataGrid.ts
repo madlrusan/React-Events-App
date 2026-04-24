@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { NexusEvent } from "../../data/eventTypes";
 import type {
 	ColumnDef,
@@ -198,7 +198,7 @@ export function useDataGrid<T extends NexusEvent>(
 			.length;
 	}, [filterState]);
 
-	function setSort(key: keyof T): void {
+	const setSort = useCallback((key: keyof T): void => {
 		setSortState((previous) => {
 			const previousKey = previous.key as keyof T | null;
 
@@ -229,47 +229,59 @@ export function useDataGrid<T extends NexusEvent>(
 			};
 		});
 		setCurrentPage(1);
-	}
+	}, []);
 
-	function setFilter(key: keyof T, value: string): void {
+	const setFilter = useCallback((key: keyof T, value: string): void => {
 		setFilterState((previous) => {
+			const normalizedKey = key as keyof NexusEvent;
+			if (previous[normalizedKey] === value) {
+				return previous;
+			}
+
 			return {
 				...previous,
-				[key as keyof NexusEvent]: value,
+				[normalizedKey]: value,
 			};
 		});
 		setCurrentPage(1);
-	}
+	}, []);
 
-	function clearFilters(): void {
+	const clearFilters = useCallback((): void => {
 		setFilterState({});
 		setCurrentPage(1);
-	}
+	}, []);
 
-	function setPage(page: number): void {
-		const safePage = Number.isFinite(page) ? Math.trunc(page) : 1;
-		const clampedPage = Math.min(Math.max(safePage, 1), totalPages);
-		setCurrentPage(clampedPage);
-	}
+	const setPage = useCallback(
+		(page: number): void => {
+			const safePage = Number.isFinite(page) ? Math.trunc(page) : 1;
+			const clampedPage = Math.min(Math.max(safePage, 1), totalPages);
+			setCurrentPage(clampedPage);
+		},
+		[totalPages],
+	);
 
-	function setPageSize(size: number): void {
+	const setPageSize = useCallback((size: number): void => {
 		const safeSize = Number.isFinite(size) ? Math.trunc(size) : 10;
 		const normalizedSize = Math.max(1, safeSize);
 		setPageSizeState(normalizedSize);
 		setCurrentPage(1);
-	}
+	}, []);
 
-	function toggleColumnVisibility(key: keyof T): void {
-		setColumnVisibility((previous) => {
-			const column = columns.find((item) => item.key === key);
-			const currentVisibility = previous[key] ?? column?.visible ?? true;
+	const toggleColumnVisibility = useCallback(
+		(key: keyof T): void => {
+			setColumnVisibility((previous) => {
+				const column = columns.find((item) => item.key === key);
+				const currentVisibility =
+					previous[key] ?? column?.visible ?? true;
 
-			return {
-				...previous,
-				[key]: !currentVisibility,
-			};
-		});
-	}
+				return {
+					...previous,
+					[key]: !currentVisibility,
+				};
+			});
+		},
+		[columns],
+	);
 
 	return {
 		visibleColumns,
